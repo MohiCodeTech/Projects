@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MUSICA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='stylemusic.css') }}">
+</head>
+
+<body>
+
+    <nav>
+        <div class="logo">MUSICA</div>
+        <div class="musiclogo"><img src="{{ url_for('static', filename='Musicaimg.jpeg') }}" alt="Music Logo">
+</div>
+
+        <div class="nav-links">
+            <a href="#">Home</a>
+            <a href="#">Learn</a>
+            <a href="#">Create</a>
+        </div>
+    </nav>
+
+
+    <main>
+
+        <section class="hero">
+
+            <p class="tagline">AI MUSIC LEARNING</p>
+
+            <h1>
+                Turn your music<br>
+                into something you can understand.
+            </h1>
+
+            <p class="description">
+                Transcribe music, learn notes and chords,
+                and create your own music with an AI assistant.
+            </p>
+
+            <div class="buttons">
+
+                <button onclick="openTranscriber()">
+                    🎧 Transcribe Music
+                </button>
+
+                <button onclick="openLearning()">
+                    🎹 Learn Music
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <section class="features">
+
+            <div class="feature-card">
+
+                <div class="icon">🎧</div>
+
+                <h2>Transcribe</h2>
+
+                <p>
+                    Upload music and turn melodies
+                    into notes or a piano roll.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="icon">🎹</div>
+
+                <h2>Learn</h2>
+
+                <p>
+                    Play notes and chords through
+                    your microphone and get feedback.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="icon">✍️</div>
+
+                <h2>Create</h2>
+
+                <p>
+                    Get help writing chords,
+                    melodies and progressions.
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+
+</html>
