@@ -1,3 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Audiowide&display=swap');
+.audiowide-regular {
+    font-family: "Audiowide", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
 * {
     margin: 0;
     padding: 0;
@@ -20,14 +26,27 @@ nav {
 
     border-bottom: 1px solid #292932;
 }
-.musiclogo {
-    border-radius: 50%;
+.img {
+    position: relative;
+    top: 0px;
+    right: 0px;
+}
+img {
+    width: 50px;
+    height: 50px;
+    border-radius: 10%;
+    size: 12cm;
+    position:absolute;
+    top: -20px;
+    right: 10px;
 }
 
 .logo {
     font-size: 24px;
     font-weight: bold;
     letter-spacing: 3px;
+    position: absolute;
+    font-family: "Audiowide", sans-serif;
 }
 
 .nav-links {
@@ -38,10 +57,12 @@ nav {
 .nav-links a {
     color: #aaa;
     text-decoration: none;
+    font-size: 20px;
 }
 
 .nav-links a:hover {
     color: white;
+    font-weight: bold;
 }
 
 main {
@@ -56,9 +77,10 @@ main {
 }
 
 .tagline {
-    font-size: 16px;
+    font-family: "Audiowide", sans-serif;
+    font-size: 24px;
     letter-spacing: 4px;
-    color: #2b283b;
+    color: #92c4e6;
     margin-bottom: 20px;
 }
 
