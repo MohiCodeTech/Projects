@@ -12,7 +12,7 @@
 
 body {
     font-family: Arial, sans-serif;
-    background: #112E81;
+    background: linear-gradient(90deg, #0d0aa5 0%, #7d1586 100%);
     color: rgb(255, 255, 255);
 }
 
@@ -55,7 +55,7 @@ img {
 }
 
 .nav-links a {
-    color: #aaa;
+    color: white;
     text-decoration: none;
     font-size: 20px;
 }
@@ -110,6 +110,9 @@ h1 {
     font-size: 60px;
     line-height: 1.05;
     margin-bottom: 25px;
+    background: linear-gradient(90deg, #17d0dd 0%, #aabdf1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .description {
@@ -131,13 +134,14 @@ h1 {
 }
 
 button {
-    border: none;
+    border: 2px;
+    border-color: #3f63c7;
     padding: 15px 25px;
+
 
     border-radius: 10px;
 
-    background: #ffffff;
-    color: #111;
+    background: linear-gradient(90deg, #3f63c7 0%, #aabdf1 100%);
 
     font-size: 16px;
     font-weight: bold;
@@ -147,6 +151,9 @@ button {
 
 button:hover {
     transform: translateY(-2px);
+    transform: scale(1.2);
+    transition-duration: 0.5s;
+    color: aliceblue;
 }
 
 .features {
@@ -158,9 +165,9 @@ button:hover {
 }
 
 .feature-card {
-    background: #18181f;
+    background: linear-gradient(90deg, #16115e 0%, #0b3296 100%);
 
-    border: 1px solid #292932;
+    border: 2px solid #292932;
 
     border-radius: 15px;
 
@@ -171,6 +178,8 @@ button:hover {
 
 .feature-card:hover {
     transform: translateY(-5px);
+    transform:scale(1.05);
+    transition-duration: 0.5s;
 }
 
 .icon {
@@ -201,4 +210,178 @@ button:hover {
         flex-direction: column;
     }
 
+}
+hr {
+    border: 0;
+    height: 3px;
+    background: #72b1e4;
+}
+/* =========================
+   TRANSCRIBE PAGE
+   ========================= */
+
+.transcribe-page {
+    width: 85%;
+    max-width: 1100px;
+    margin: auto;
+    padding: 80px 0;
+}
+
+.page-heading {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.page-heading h1 {
+    font-size: 55px;
+    line-height: 1.1;
+    margin-bottom: 20px;
+}
+
+.page-heading p {
+    color: #aaa;
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+
+/* Upload box */
+
+.upload-box {
+    max-width: 700px;
+    margin: auto;
+
+    text-align: center;
+
+    padding: 60px 40px;
+
+    border: 1px dashed #5757aa;
+
+    border-radius: 20px;
+
+    background: #15151f;
+}
+
+.upload-icon {
+    font-size: 50px;
+    margin-bottom: 20px;
+}
+
+.upload-box h2 {
+    margin-bottom: 10px;
+}
+
+.upload-box p {
+    color: #999;
+    margin-bottom: 30px;
+}
+
+
+/* File input */
+
+input[type="file"] {
+    display: block;
+
+    margin: 0 auto 25px;
+
+    color: #aaa;
+}
+
+
+/* Analyze button */
+
+.upload-box button {
+    background: linear-gradient(90deg,
+            #7c5cff,
+            #4d9cff);
+
+    color: white;
+
+    border: none;
+
+    padding: 15px 30px;
+
+    border-radius: 10px;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+.upload-box button:hover {
+    transform: translateY(-2px);
+}
+
+
+/* Status */
+
+#status {
+    margin-top: 20px;
+    color: #aaa;
+}
+
+
+/* Results */
+
+.result-section {
+    margin-top: 60px;
+
+    padding: 40px;
+
+    background: #15151f;
+
+    border: 1px solid #292940;
+
+    border-radius: 20px;
+}
+
+.result-section h2 {
+    margin-bottom: 30px;
+}
+
+
+/* Sheet music */
+
+#sheetMusic {
+    background: white;
+
+    border-radius: 10px;
+
+    padding: 30px;
+
+    overflow-x: auto;
+}
+
+
+/* Detected notes */
+
+.detected {
+    margin-top: 30px;
+}
+
+.detected h3 {
+    margin-bottom: 10px;
+}
+
+#notes {
+    color: #a99aff;
+
+    font-size: 20px;
+
+    letter-spacing: 2px;
+
+    background: #0e0e15;
+
+    padding: 20px;
+
+    border-radius: 10px;
+}
+
+
+/* Active navigation */
+
+.nav-links .active {
+    color: white;
 }

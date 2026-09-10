@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MUSICA - Transcribe</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='stylemusic.css') }}">
+
+    <!-- ABCjs -->
+    <script src="https://cdn.jsdelivr.net/npm/abcjs@6.4.7/dist/abcjs-basic-min.js"></script>
+
+</head>
+
+
+<body>
+
+    <nav>
+
+        <div class="logo">MUSICA</div>
+        <div class="img">
+            <img src="{{ url_for('static', filename='Musicaimg.jpeg') }}" alt="Music Logo">
+        </div>
+
+        <div class="nav-links">
+
+            <a href="/">Home</a>
+
+            <a href="/transcribe" class="active">
+                Transcribe
+            </a>
+
+            <a href="#">
+                Learn
+            </a>
+
+            <a href="#">
+                Create
+            </a>
+
+        </div>
+
+    </nav>
+
+
+    <main class="transcribe-page">
+
+        <div class="page-heading">
+
+            <p class="tagline">
+                AI MUSIC TRANSCRIPTION
+            </p>
+
+            <h1>
+                Turn your music<br>
+                into sheet music.
+            </h1>
+
+            <p>
+                Upload a short melody and MUSICA will
+                analyze the notes and create readable music notation.
+            </p>
+
+        </div>
+
+
+        <div class="upload-box">
+
+            <div class="upload-icon">
+                🎵
+            </div>
+
+            <h2>
+                Upload your melody
+            </h2>
+
+            <p>
+                For this prototype, use a WAV recording
+                containing a single melody.
+            </p>
+
+            <input type="file" id="audioFile" accept=".wav,audio/wav">
+
+            <button onclick="transcribeMusic()">
+                Analyze Music
+            </button>
+
+            <div id="status"></div>
+
+        </div>
+
+
+        <section id="result" class="result-section" style="display:none;">
+
+            <h2>
+                🎼 Your Sheet Music
+            </h2>
+
+            <div id="sheetMusic"></div>
+
+
+            <div class="detected">
+
+                <h3>
+                    Detected notes
+                </h3>
+
+                <div id="notes"></div>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+    <script>
+
+        async function transcribeMusic() {
+
+            const fileInput =
+                document.getElementById("audioFile");
+
+            const status =
+                document.getElementById("status");
+
+            const result =
+                document.getElementById("result");
+
+
+            if (!fileInput.files.length) {
+
+                status.innerText =
+                    "Please choose an audio file first.";
+
+                return;
+            }
+
+
+            const file =
+                fileInput.files[0];
+
+
+            const formData =
+                new FormData();
+
+            formData.append("audio", file);
+
+
+            status.innerText =
+                "🎧 Analyzing your music...";
+
+
+            try {
+
+                const response =
+                    await fetch("/api/transcribe", {
+
+                        method: "POST",
+
+                        body: formData
+
+                    });
+
+
+                const data =
+                    await response.json();
+
+
+                if (data.error) {
+
+                    status.innerText =
+                        "Error: " + data.error;
+
+                    return;
+                }
+
+
+                status.innerText =
+                    "✅ Transcription complete!";
+
+
+                result.style.display =
+                    "block";
+
+
+                // Show detected notes
+
+                document.getElementById("notes").innerText =
+                    data.notes.join(" → ");
+
+
+                // Draw sheet music
+
+                ABCJS.renderAbc(
+                    "sheetMusic",
+                    data.abc,
+                    {
+                        responsive: "resize",
+                        staffwidth: 800
+                    }
+                );
+
+
+            } catch (error) {
+
+                status.innerText =
+                    "Something went wrong.";
+
+                console.error(error);
+
+            }
+
+        }
+
+    </script>
+
+
+</body>
+
+</html>
