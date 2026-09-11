@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='stylemusic.css') }}">
 
     <!-- ABCjs -->
-    <script src="https://cdn.jsdelivr.net/npm/abcjs@6.4.7/dist/abcjs-basic-min.js"></script>
+    <script src="{{ url_for('static', filename='abcjs-basic-min.js') }}"></script>
 
 </head>
 
@@ -123,31 +123,38 @@
 
         async function transcribeMusic() {
 
-            const fileInput =
-                document.getElementById("audioFile");
+            const fileInput = document.getElementById("audioFile");
+            const status = document.getElementById("status");
+            const result = document.getElementById("result");
+            const notesDisplay = document.getElementById("notes");
+            const sheetMusic = document.getElementById("sheetMusic");
 
-            const status =
-                document.getElementById("status");
 
-            const result =
-                document.getElementById("result");
-
+            // Check if a file was selected
 
             if (!fileInput.files.length) {
 
-                status.innerText =
-                    "Please choose an audio file first.";
+                status.innerText = "Please choose an audio file first.";
 
                 return;
             }
 
 
-            const file =
-                fileInput.files[0];
+            const file = fileInput.files[0];
 
 
-            const formData =
-                new FormData();
+            // Make sure it is a WAV file
+
+            if (!file.name.toLowerCase().endsWith(".wav")) {
+
+                status.innerText =
+                    "Please upload a WAV audio file.";
+
+                return;
+            }
+
+
+            const formData = new FormData();
 
             formData.append("audio", file);
 
@@ -158,62 +165,96 @@
 
             try {
 
-                const response =
-                    await fetch("/api/transcribe", {
+                // Send audio to Flask
 
+                const response = await fetch(
+                    "/api/transcribe",
+                    {
                         method: "POST",
-
                         body: formData
-
-                    });
-
-
-                const data =
-                    await response.json();
+                    }
+                );
 
 
-                if (data.error) {
+                // Check if Flask responded successfully
 
-                    status.innerText =
-                        "Error: " + data.error;
+                if (!response.ok) {
 
-                    return;
+                    throw new Error(
+                        "Server returned error " + response.status
+                    );
                 }
 
 
-                status.innerText =
-                    "✅ Transcription complete!";
+                const data = await response.json();
 
 
-                result.style.display =
-                    "block";
+                // Check for an error from Python
+
+                if (data.error) {
+
+                    throw new Error(data.error);
+                }
+
+
+                console.log("Detected notes:", data.notes);
+                console.log("ABC notation:", data.abc);
+
+
+                // Show the results section
+
+                result.style.display = "block";
 
 
                 // Show detected notes
 
-                document.getElementById("notes").innerText =
+                notesDisplay.innerText =
                     data.notes.join(" → ");
 
 
-                // Draw sheet music
+                // Check that ABCjs loaded
+
+                if (typeof ABCJS === "undefined") {
+
+                    throw new Error(
+                        "ABCjs could not be loaded. Check your internet connection."
+                    );
+                }
+
+
+                // Clear previous sheet music
+
+                sheetMusic.innerHTML = "";
+
+
+                // Create sheet music
 
                 ABCJS.renderAbc(
                     "sheetMusic",
                     data.abc,
                     {
                         responsive: "resize",
-                        staffwidth: 800
+                        staffwidth: 800,
+                        scale: 1.2,
+                        foregroundColor: "#000000"   // <-- force black notation
                     }
                 );
 
 
+                status.innerText =
+                    "✅ Transcription complete!";
+
+
             } catch (error) {
 
+                console.error(
+                    "MUSICA ERROR:",
+                    error
+                );
+
+
                 status.innerText =
-                    "Something went wrong.";
-
-                console.error(error);
-
+                    "❌ Error: " + error.message;
             }
 
         }
