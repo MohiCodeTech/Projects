@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -11,7 +11,7 @@
 
     <link rel="stylesheet" href="{{ url_for('static', filename='stylemusic.css') }}">
 
-    <!-- ABCjs -->
+    
     <script src="{{ url_for('static', filename='abcjs-basic-min.js') }}"></script>
 
 </head>
@@ -261,6 +261,904 @@
 
     </script>
 
+
+</body>
+
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MUSICA - Transcribe</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='stylemusic.css') }}">
+
+    <!-- ABCjs -->
+    <script src="{{ url_for('static', filename='abcjs-basic-min.js') }}"></script>
+
+</head>
+
+
+<body>
+
+    <!-- ================= NAVIGATION ================= -->
+
+    <nav>
+
+        <div class="logo">
+            MUSICA
+        </div>
+
+        <div class="img">
+
+            <img src="{{ url_for('static', filename='Musicaimg.jpeg') }}" alt="Music Logo">
+
+        </div>
+
+        <div class="nav-links">
+
+            <a href="/">
+                Home
+            </a>
+
+            <a href="/transcribe" class="active">
+                Transcribe
+            </a>
+
+            <a href="#">
+                Learn
+            </a>
+
+            <a href="#">
+                Create
+            </a>
+
+        </div>
+
+    </nav>
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="transcribe-page">
+
+
+        <!-- ================= HEADING ================= -->
+
+        <div class="page-heading">
+
+            <p class="tagline">
+                AI MUSIC TRANSCRIPTION
+            </p>
+
+            <h1>
+                Turn your music
+                <br>
+                into sheet music.
+            </h1>
+
+            <p>
+                Upload a short melody and MUSICA will
+                analyze the notes and create readable music notation.
+            </p>
+
+        </div>
+
+
+        <!-- ================= UPLOAD ================= -->
+
+        <div class="upload-box">
+
+            <div class="upload-icon">
+                🎵
+            </div>
+
+            <h2>
+                Upload your melody
+            </h2>
+
+            <p>
+                For this prototype, use a WAV recording
+                containing a single melody.
+            </p>
+
+
+            <input type="file" id="audioFile" accept=".wav,audio/wav">
+
+
+            <button onclick="transcribeMusic()">
+                Analyze Music
+            </button>
+
+
+            <div id="status"></div>
+
+        </div>
+
+
+
+        <!-- ================= RESULTS ================= -->
+
+        <section id="result" class="result-section" style="display:none;">
+
+
+            <h2>
+                🎼 Your Sheet Music
+            </h2>
+
+
+            <!-- SHEET MUSIC -->
+
+            <div id="sheetMusic">
+            </div>
+
+
+            <!-- ================= CONTROLS ================= -->
+
+            <div class="music-controls">
+
+                <button id="playButton" onclick="playMusic()">
+                    ▶ Play Music
+                </button>
+
+
+                <button onclick="stopMusic()">
+                    ⏹ Stop
+                </button>
+
+
+                <label>
+
+                    Speed:
+
+                    <select id="speedSelect" onchange="changeSpeed()">
+
+                        <option value="0.5">
+                            0.5×
+                        </option>
+
+                        <option value="0.75">
+                            0.75×
+                        </option>
+
+                        <option value="1" selected>
+                            1×
+                        </option>
+
+                        <option value="1.25">
+                            1.25×
+                        </option>
+
+                        <option value="1.5">
+                            1.5×
+                        </option>
+
+                    </select>
+
+                </label>
+
+            </div>
+
+
+            <!-- ================= DETECTED NOTES ================= -->
+
+            <div class="detected">
+
+                <h3>
+                    Detected notes
+                </h3>
+
+                <div id="notes">
+                </div>
+
+            </div>
+
+
+            <!-- ================= INFO ================= -->
+
+            <div class="prototype-info">
+
+                <p>
+                    🎧 <strong>MUSICA AI</strong> detected
+                    the melody from your audio.
+                </p>
+
+                <p>
+                    🎼 The detected notes were converted
+                    into readable sheet music.
+                </p>
+
+                <p>
+                    🔊 Press <strong>Play Music</strong>
+                    to hear the generated melody.
+                </p>
+
+            </div>
+
+
+        </section>
+
+    </main>
+
+
+
+    <!-- ==================================================
+         JAVASCRIPT
+         ================================================== -->
+
+    <script>
+
+
+        // ==================================================
+        // GLOBAL VARIABLES
+        // ==================================================
+
+        let detectedNotes = [];
+
+        let detectedDurations = [];
+
+        let audioContext = null;
+
+        let currentOscillator = null;
+
+        let playbackTimeout = null;
+
+        let currentNoteIndex = 0;
+
+        let playbackSpeed = 1;
+
+        let isPlaying = false;
+
+
+
+        // ==================================================
+        // TRANSCRIBE MUSIC
+        // ==================================================
+
+        async function transcribeMusic() {
+
+            const fileInput =
+                document.getElementById("audioFile");
+
+            const status =
+                document.getElementById("status");
+
+            const result =
+                document.getElementById("result");
+
+            const notesDisplay =
+                document.getElementById("notes");
+
+            const sheetMusic =
+                document.getElementById("sheetMusic");
+
+
+            // ------------------------------------------------
+            // CHECK FILE
+            // ------------------------------------------------
+
+            if (!fileInput.files.length) {
+
+                status.innerText =
+                    "Please choose an audio file first.";
+
+                return;
+            }
+
+
+            const file =
+                fileInput.files[0];
+
+
+            if (
+                !file.name
+                    .toLowerCase()
+                    .endsWith(".wav")
+            ) {
+
+                status.innerText =
+                    "Please upload a WAV audio file.";
+
+                return;
+            }
+
+
+            // ------------------------------------------------
+            // SEND FILE TO FLASK
+            // ------------------------------------------------
+
+            const formData =
+                new FormData();
+
+            formData.append(
+                "audio",
+                file
+            );
+
+
+            status.innerText =
+                "🎧 Analyzing your music...";
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/api/transcribe",
+                        {
+                            method: "POST",
+                            body: formData
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Server returned error " +
+                        response.status
+                    );
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                if (data.error) {
+
+                    throw new Error(
+                        data.error
+                    );
+                }
+
+
+                // ------------------------------------------------
+                // SAVE NOTES
+                // ------------------------------------------------
+
+                detectedNotes =
+                    data.notes || [];
+
+                detectedDurations =
+                    data.durations || [];
+
+
+                console.log(
+                    "Detected notes:",
+                    detectedNotes
+                );
+
+
+                console.log(
+                    "Durations:",
+                    detectedDurations
+                );
+
+
+                console.log(
+                    "ABC:",
+                    data.abc
+                );
+
+
+                // ------------------------------------------------
+                // SHOW RESULTS
+                // ------------------------------------------------
+
+                result.style.display =
+                    "block";
+
+
+                notesDisplay.innerText =
+                    detectedNotes.join(" → ");
+
+
+                // ------------------------------------------------
+                // CHECK ABCJS
+                // ------------------------------------------------
+
+                if (
+                    typeof ABCJS ===
+                    "undefined"
+                ) {
+
+                    throw new Error(
+                        "ABCjs could not be loaded."
+                    );
+                }
+
+
+                // ------------------------------------------------
+                // RENDER SHEET
+                // ------------------------------------------------
+
+                sheetMusic.innerHTML =
+                    "";
+
+
+                ABCJS.renderAbc(
+                    "sheetMusic",
+                    data.abc,
+                    {
+
+                        responsive: "resize",
+
+                        staffwidth: 900,
+
+                        scale: 1.3,
+
+                        foregroundColor: "#000000",
+
+                        add_classes: true
+
+                    }
+                );
+
+
+                status.innerText =
+                    "✅ Transcription complete!";
+
+
+            } catch (error) {
+
+                console.error(
+                    "MUSICA ERROR:",
+                    error
+                );
+
+
+                status.innerText =
+                    "❌ Error: " +
+                    error.message;
+
+            }
+
+        }
+
+
+
+        // ==================================================
+        // CONVERT NOTE NAME TO FREQUENCY
+        // ==================================================
+
+        function noteToFrequency(note) {
+
+            /*
+                MIDI formula:
+
+                frequency =
+                440 × 2^((MIDI - 69) / 12)
+            */
+
+
+            const noteNames = {
+
+                "C": 0,
+                "C#": 1,
+                "D": 2,
+                "D#": 3,
+                "E": 4,
+                "F": 5,
+                "F#": 6,
+                "G": 7,
+                "G#": 8,
+                "A": 9,
+                "A#": 10,
+                "B": 11
+
+            };
+
+
+            // ------------------------------------------------
+            // Handle sharp notes
+            // ------------------------------------------------
+
+            let pitchName =
+                note.slice(0, -1);
+
+            let octave =
+                parseInt(
+                    note.slice(-1)
+                );
+
+
+            let pitch =
+                noteNames[pitchName];
+
+
+            if (pitch === undefined) {
+
+                return null;
+
+            }
+
+
+            const midi =
+                (octave + 1) * 12
+                + pitch;
+
+
+            const frequency =
+                440 *
+                Math.pow(
+                    2,
+                    (midi - 69) / 12
+                );
+
+
+            return frequency;
+
+        }
+
+
+
+        // ==================================================
+        // PLAY ONE NOTE
+        // ==================================================
+
+        function playNote(
+            note,
+            duration
+        ) {
+
+            if (!audioContext) {
+
+                audioContext =
+                    new (
+                        window.AudioContext ||
+                        window.webkitAudioContext
+                    )();
+
+            }
+
+
+            const frequency =
+                noteToFrequency(note);
+
+
+            if (!frequency) {
+
+                return;
+
+            }
+
+
+            // ------------------------------------------------
+            // Oscillator
+            // ------------------------------------------------
+
+            const oscillator =
+                audioContext.createOscillator();
+
+
+            const gain =
+                audioContext.createGain();
+
+
+            oscillator.type =
+                "triangle";
+
+
+            oscillator.frequency.value =
+                frequency;
+
+
+            // ------------------------------------------------
+            // Volume envelope
+            // ------------------------------------------------
+
+            const now =
+                audioContext.currentTime;
+
+
+            gain.gain.setValueAtTime(
+                0,
+                now
+            );
+
+
+            gain.gain.linearRampToValueAtTime(
+                0.25,
+                now + 0.03
+            );
+
+
+            gain.gain.linearRampToValueAtTime(
+                0.18,
+                now + duration * 0.7
+            );
+
+
+            gain.gain.linearRampToValueAtTime(
+                0,
+                now + duration
+            );
+
+
+            oscillator.connect(gain);
+
+            gain.connect(
+                audioContext.destination
+            );
+
+
+            oscillator.start(now);
+
+            oscillator.stop(
+                now + duration
+            );
+
+
+            currentOscillator =
+                oscillator;
+
+        }
+
+
+
+        // ==================================================
+        // PLAY WHOLE MELODY
+        // ==================================================
+
+        function playMusic() {
+
+            if (
+                !detectedNotes ||
+                detectedNotes.length === 0
+            ) {
+
+                alert(
+                    "Please transcribe a song first."
+                );
+
+                return;
+
+            }
+
+
+            // Stop previous playback
+
+            stopMusic();
+
+
+            // Create AudioContext
+
+            if (!audioContext) {
+
+                audioContext =
+                    new (
+                        window.AudioContext ||
+                        window.webkitAudioContext
+                    )();
+
+            }
+
+
+            if (
+                audioContext.state ===
+                "suspended"
+            ) {
+
+                audioContext.resume();
+
+            }
+
+
+            isPlaying = true;
+
+            currentNoteIndex = 0;
+
+
+            playNextNote();
+
+        }
+
+
+
+        // ==================================================
+        // PLAY NEXT NOTE
+        // ==================================================
+
+        function playNextNote() {
+
+            if (!isPlaying) {
+
+                return;
+
+            }
+
+
+            if (
+                currentNoteIndex >=
+                detectedNotes.length
+            ) {
+
+                isPlaying = false;
+
+                return;
+
+            }
+
+
+            const note =
+                detectedNotes[
+                currentNoteIndex
+                ];
+
+
+            /*
+                We currently use approximately
+                quarter-note timing.
+
+                Later, MUSICA can use the actual
+                detected rhythm here.
+            */
+
+            const baseDuration = 0.55;
+
+            const duration =
+                baseDuration /
+                playbackSpeed;
+
+
+            playNote(
+                note,
+                duration
+            );
+
+
+            // Highlight current note
+
+            highlightNote(
+                currentNoteIndex
+            );
+
+
+            currentNoteIndex++;
+
+
+            playbackTimeout =
+                setTimeout(
+                    playNextNote,
+                    duration * 1000
+                );
+
+        }
+
+
+
+        // ==================================================
+        // STOP MUSIC
+        // ==================================================
+
+        function stopMusic() {
+
+            isPlaying = false;
+
+
+            if (playbackTimeout) {
+
+                clearTimeout(
+                    playbackTimeout
+                );
+
+                playbackTimeout = null;
+
+            }
+
+
+            if (currentOscillator) {
+
+                try {
+
+                    currentOscillator.stop();
+
+                } catch (e) {
+
+                    // Already stopped
+
+                }
+
+                currentOscillator = null;
+
+            }
+
+
+            currentNoteIndex = 0;
+
+            clearHighlight();
+
+        }
+
+
+
+        // ==================================================
+        // SPEED
+        // ==================================================
+
+        function changeSpeed() {
+
+            playbackSpeed =
+                parseFloat(
+                    document.getElementById(
+                        "speedSelect"
+                    ).value
+                );
+
+        }
+
+
+
+        // ==================================================
+        // NOTE HIGHLIGHTING
+        // ==================================================
+
+        function highlightNote(index) {
+
+            clearHighlight();
+
+
+            const noteBoxes =
+                document.querySelectorAll(
+                    ".note-playing"
+                );
+
+
+            noteBoxes.forEach(
+                box =>
+                    box.classList.remove(
+                        "note-playing"
+                    )
+            );
+
+
+            const notes =
+                document.getElementById(
+                    "notes"
+                );
+
+
+            if (!notes) return;
+
+
+            /*
+                The detected notes are displayed
+                as text, so we don't highlight
+                individual text nodes yet.
+
+                This function is ready for the
+                next UI improvement.
+            */
+
+        }
+
+
+
+        function clearHighlight() {
+
+            const elements =
+                document.querySelectorAll(
+                    ".note-playing"
+                );
+
+
+            elements.forEach(
+                element =>
+                    element.classList.remove(
+                        "note-playing"
+                    )
+            );
+
+        }
+
+
+    </script>
 
 </body>
 

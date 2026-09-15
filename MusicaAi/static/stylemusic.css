@@ -385,3 +385,89 @@ input[type="file"] {
 .nav-links .active {
     color: white;
 }
+/* =========================================================
+   MUSIC PLAYER CONTROLS
+   ========================================================= */
+
+.music-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+
+.music-controls button {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #6c4cff;
+    color: white;
+    transition: 0.2s;
+}
+
+
+.music-controls button:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+
+.music-controls label {
+    font-size: 14px;
+    margin-left: 5px;
+}
+
+
+.music-controls select {
+    margin-left: 5px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid #aaa;
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   PROTOTYPE INFORMATION
+   ========================================================= */
+
+.prototype-info {
+    margin-top: 25px;
+    padding: 18px 20px;
+    border-radius: 12px;
+    background: rgba(108, 76, 255, 0.08);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+
+.prototype-info p {
+    margin: 6px 0;
+}
+
+
+/* =========================================================
+   SHEET MUSIC
+   ========================================================= */
+
+#sheetMusic {
+    width: 100%;
+    min-height: 180px;
+    overflow-x: auto;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+
+#sheetMusic svg {
+    max-width: 100%;
+    height: auto;
+}
