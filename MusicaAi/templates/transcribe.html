@@ -719,6 +719,7 @@
         let originalAudioURL = null;
 
         let playheadAnimation = null;
+        let playbackTimeout = null;
 
 
 
@@ -1502,188 +1503,330 @@
 
         async function loadPiano() {
 
-            if (pianoSampler) {
+                if (pianoSampler) {
+                    await Tone.loaded();
+                    return;
+                }
+
+                console.log("🎹 Loading grand piano...");
+
+                pianoSampler = new Tone.Sampler({
+
+                    urls: {
+
+                        C1: "C1.mp3",
+                        C2: "C2.mp3",
+                        C3: "C3.mp3",
+                        C4: "C4.mp3",
+                        C5: "C5.mp3",
+                        C6: "C6.mp3",
+                        C7: "C7.mp3"
+
+                    },
+
+                    baseUrl:
+                        "https://tonejs.github.io/audio/salamander/",
+
+                    release: 1.5
+
+                }).toDestination();
+
                 await Tone.loaded();
-                return;
-            }
-
-            console.log("Loading piano...");
-
-            pianoSampler = new Tone.Sampler({
-
-                urls: {
-                    C1: "C1.mp3",
-                    C2: "C2.mp3",
-                    C3: "C3.mp3",
-                    C4: "C4.mp3",
-                    C5: "C5.mp3",
-                    C6: "C6.mp3",
-                    C7: "C7.mp3"
-                },
-
-                baseUrl:
-                    "https://tonejs.github.io/audio/salamander/",
-
-                release: 1.5
-
-            }).toDestination();
-
-            await Tone.loaded();
-
-            console.log("🎹 Grand piano loaded!");
-
-        }
-
-
-        // =====================================================
-        // PLAY TRANSCRIBED MUSIC
-        // =====================================================
-
-        async function playMusic() {
-
-            if (!noteEvents || noteEvents.length === 0) {
-
-                alert("Please transcribe a song first.");
-
-                return;
-            }
-
-            try {
-
-                // Start Web Audio
-                await Tone.start();
-
-                console.log("Audio started");
-
-                // Make sure piano is loaded
-                await loadPiano();
-
-                // Stop anything currently playing
-                stopMusic();
-
-                isPlaying = true;
-
-                const speed =
-                    Number(playbackSpeed) || 1;
-
-
-                // -------------------------------------------------
-                // USE A SIMPLE ABSOLUTE AUDIO TIMELINE
-                // -------------------------------------------------
-
-                const now = Tone.now();
-
-                const startTime = now + 0.2;
-
 
                 console.log(
-                    "Playing",
-                    noteEvents.length,
-                    "notes"
+                    "✅ Grand piano loaded!"
                 );
+            }
 
 
-                noteEvents.forEach(event => {
+        // PLAY TRANSCRIBED MUSIC
+        async function playMusic() {
 
-                    const note =
-                        event.note;
+                if (!noteEvents || noteEvents.length === 0) {
+                    alert("Please transcribe a song first.");
+                    return;
+                }
 
-                    const originalStart =
-                        Number(event.start) || 0;
+                try {
 
-                    const originalDuration =
-                        Number(event.duration) || 0.2;
+                    await Tone.start();
+                    await loadPiano();
+
+                    // Stop previous playback
+                    stopMusic();
+
+                    isPlaying = true;
+
+                    // Playback speed
+                    // const speed =
+                    //     (Number(playbackSpeed) || 1) * 1.25;
+                    const speed = Number(playbackSpeed) || 1;
+
+                    // Give the browser a tiny amount of time
+                    // before the first note
+                    const startTime =
+                        Tone.now() + 0.2;
+
+                    console.log("🎹 Starting piano playback");
+                    console.log("Number of events:", noteEvents.length);
+
+                    let latestEndTime = 0;
+                    let validNotes = 0;
 
 
-                    const start =
-                        originalStart / speed;
+                    // ==========================================
+                    // SCHEDULE EVERY NOTE
+                    // ==========================================
 
-                    const duration =
-                        Math.max(
-                            originalDuration / speed,
-                            0.08
+                    noteEvents.forEach((event, index) => {
+
+                        let note;
+
+                        if (Number.isFinite(Number(event.midi))) {
+
+                            note = Tone.Frequency(
+                                Number(event.midi),
+                                "midi"
+                            ).toNote();
+
+                        } else {
+
+                            note = convertToNoteName(event.note);
+
+                        }
+
+                        const start =
+                            Number(event.start);
+
+                        const duration =
+                            Number(event.duration);
+
+
+                        // Ignore invalid events
+                        if (!note) {
+
+                            console.warn(
+                                "Skipping invalid note:",
+                                event
+                            );
+
+                            return;
+                        }
+
+                        if (
+                            !Number.isFinite(start) ||
+                            !Number.isFinite(duration)
+                        ) {
+
+                            console.warn(
+                                "Skipping invalid timing:",
+                                event
+                            );
+
+                            return;
+                        }
+
+
+                        // Apply playback speed
+                        const adjustedStart =
+                            start / speed;
+
+                        const adjustedDuration =
+                            Math.max(
+                                duration / speed,
+                                0.08
+                            );
+
+
+                        // Calculate when this note ends
+                        const noteEnd =
+                            adjustedStart +
+                            adjustedDuration;
+
+
+                        // Keep track of the TRUE end
+                        // of the entire song
+                        if (noteEnd > latestEndTime) {
+                            latestEndTime = noteEnd;
+                        }
+
+
+                        console.log(
+                            `🎵 ${index + 1}: ${note} | ` +
+                            `start=${adjustedStart.toFixed(2)} | ` +
+                            `duration=${adjustedDuration.toFixed(2)}`
                         );
 
 
+                        // Schedule piano note
+                        pianoSampler.triggerAttackRelease(
+                            note,
+                            adjustedDuration,
+                            startTime + adjustedStart
+                        );
+
+
+                        validNotes++;
+
+                    });
+
+
                     console.log(
-                        note,
-                        "start:",
-                        start,
-                        "duration:",
-                        duration
+                        "✅ Valid notes scheduled:",
+                        validNotes
+                    );
+
+                    console.log(
+                        "⏱️ Song ends at:",
+                        latestEndTime.toFixed(2),
+                        "seconds"
                     );
 
 
-                    pianoSampler.triggerAttackRelease(
-
-                        note,
-
-                        duration,
-
-                        startTime + start
-
-                    );
-
-                });
-
-
-                // -------------------------------------------------
-                // PLAYHEAD
-                // -------------------------------------------------
-
-                animatePlayhead(
-                    startTime
-                );
-
-
-                // -------------------------------------------------
-                // FIND END OF SONG
-                // -------------------------------------------------
-
-                const lastEvent =
-                    noteEvents[
-                    noteEvents.length - 1
-                    ];
-
-
-                const totalDuration =
-                    (
-                        Number(lastEvent.start) +
-                        Number(lastEvent.duration)
-                    ) / speed;
-
-
-                setTimeout(() => {
-
-                    if (isPlaying) {
+                    if (validNotes === 0) {
 
                         isPlaying = false;
 
-                        stopPlayhead();
+                        alert(
+                            "No valid notes were found."
+                        );
 
+                        return;
                     }
 
-                }, (totalDuration + 0.5) * 1000);
+
+                    // ==========================================
+                    // PLAYHEAD
+                    // ==========================================
+
+                    animatePlayhead(startTime);
 
 
-            } catch (error) {
+                    // ==========================================
+                    // IMPORTANT:
+                    // WAIT UNTIL THE LAST NOTE HAS FINISHED
+                    // ==========================================
 
-                console.error(
-                    "❌ Piano playback error:",
-                    error
-                );
+                    const waitTime =
+                        (
+                            latestEndTime +
+                            1.0
+                        ) * 1000;
 
-                isPlaying = false;
 
-                stopPlayhead();
+                    playbackTimeout =
+                        setTimeout(() => {
 
-                alert(
-                    "Piano playback failed. Check the browser console (F12)."
-                );
+                            if (isPlaying) {
+
+                                console.log(
+                                    "🎵 Playback finished"
+                                );
+
+                                isPlaying = false;
+
+                                stopPlayhead();
+
+                                if (pianoSampler) {
+                                    pianoSampler.releaseAll();
+                                }
+
+                            }
+
+                        }, waitTime);
+
+
+                } catch (error) {
+
+                    console.error(
+                        "❌ Piano playback error:",
+                        error
+                    );
+
+                    isPlaying = false;
+
+                    stopPlayhead();
+
+                    alert(
+                        "Piano playback failed. Check F12 → Console."
+                    );
+
+                }
 
             }
 
-        }
+            function convertToNoteName(value) {
+
+                    // Nothing provided
+                    if (value === undefined || value === null) {
+                        return null;
+                    }
+
+                    // Convert to string
+                    const text =
+                        String(value).trim();
+
+                    if (text === "") {
+                        return null;
+                    }
+
+                    /*
+                     * Already a normal musical note:
+                     *
+                     * C4
+                     * D#4
+                     * F#3
+                     * Bb4
+                     */
+
+                    const noteRegex =
+                        /^[A-Ga-g](?:#|b)?-?\d+$/;
+
+                    if (noteRegex.test(text)) {
+
+                        // Tone.js prefers uppercase note letters
+                        return text.charAt(0).toUpperCase() +
+                            text.slice(1);
+
+                    }
+
+                    /*
+                     * If Python gave us a MIDI number,
+                     * convert it to a musical note.
+                     *
+                     * 60 -> C4
+                     * 61 -> C#4
+                     * 62 -> D4
+                     */
+
+                    const midi =
+                        Number(value);
+
+                    if (Number.isFinite(midi)) {
+
+                        const roundedMidi =
+                            Math.round(midi);
+
+                        if (
+                            roundedMidi >= 0 &&
+                            roundedMidi <= 127
+                        ) {
+
+                            return Tone.Frequency(
+                                roundedMidi,
+                                "midi"
+                            ).toNote();
+
+                        }
+                    }
+
+                    console.warn(
+                        "⚠️ Could not convert note:",
+                        value
+                    );
+
+                    return null;
+                }
 
 
         // =====================================================
@@ -1692,18 +1835,32 @@
 
         function stopMusic() {
 
-            isPlaying = false;
+                isPlaying = false;
 
-            if (pianoSampler) {
 
-                pianoSampler.releaseAll();
+                // Cancel previous playback timer
+                if (playbackTimeout) {
+
+                    clearTimeout(
+                        playbackTimeout
+                    );
+
+                    playbackTimeout = null;
+
+                }
+
+
+                // Release piano notes
+                if (pianoSampler) {
+
+                    pianoSampler.releaseAll();
+
+                }
+
+
+                stopPlayhead();
 
             }
-
-            stopPlayhead();
-
-        }
-
 
 
         // =====================================================
