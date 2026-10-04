@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Musica AI Vibe - Music to Sheet Music & Playable Piano Roll</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- OpenSheetMusicDisplay for crisp MusicXML sheet music rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.8.8/build/opensheetmusicdisplay.min.js"></script>
+
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="container">
+    
+    <!-- App Header -->
+    <header class="app-header">
+      <div class="brand-wrapper">
+        <div class="logo-icon">🎵</div>
+        <div>
+          <h1 class="brand-title">Musica AI Vibe</h1>
+          <p class="brand-subtitle">AI-Powered Music Transcription, BPM Detection, Piano Roll & Sheet Music</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="badge">⚡ BPM & Tempo</span>
+        <span class="badge cyan">🎼 Sheet Music</span>
+        <span class="badge emerald">🎹 Playable Piano Roll</span>
+      </div>
+    </header>
+
+    <!-- Upload & Input Card -->
+    <section class="glass-card">
+      <div class="upload-zone" id="dropzone">
+        <div class="upload-icon-wrapper">
+          <span>🎧</span>
+        </div>
+        <h2 class="upload-title">Drop your audio file here, or click to browse</h2>
+        <p class="upload-desc">Upload any piece of music to extract notes, sheet music, tempo, and piano roll</p>
+        <p class="file-types">Supports MP3, WAV, FLAC, OGG, M4A, AAC, AIFF</p>
+        <input type="file" id="file-input" class="hidden-file-input" accept="audio/*">
+      </div>
+
+      <!-- Options & Presets Bar -->
+      <div class="options-bar">
+        <!-- Mode Selector -->
+        <div class="mode-selector">
+          <span class="mode-label">Transcription Mode:</span>
+          <button class="mode-btn active" id="mode-poly" title="Captures chords and multi-voice arrangements">✨ Polyphonic (Chords + Melody)</button>
+          <button class="mode-btn" id="mode-melody" title="Optimized for vocal, flute, violin or solo piano lead">🎤 Melody Focus (Solo Lead)</button>
+        </div>
+
+        <!-- Quick Demo Samples -->
+        <div class="samples-wrapper">
+          <span class="samples-label">Or try a sample track:</span>
+          <button class="sample-pill" data-sample="sample_classical_fur_elise.wav">🎹 Classical (Für Elise)</button>
+          <button class="sample-pill" data-sample="sample_lofi_chords.wav">🎸 Pop/Lo-Fi Chords</button>
+          <button class="sample-pill" data-sample="sample_jazz_blues.wav">🎷 Jazz Blues Hook</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Progress Card (Hidden initially) -->
+    <section class="glass-card progress-card" id="progress-card">
+      <div class="progress-spinner"></div>
+      <div class="progress-status" id="progress-status">Analyzing Audio Spectrogram...</div>
+      <div class="progress-sub" id="progress-sub">Extracting pitch, detecting tempo and beats per minute</div>
+    </section>
+
+    <!-- Results Section (Revealed when analyzed) -->
+    <section class="results-section" id="results-section">
+      
+      <!-- Metrics Grid -->
+      <div class="metrics-grid">
+        <!-- BPM Card -->
+        <div class="metric-card bpm-card">
+          <div class="metric-icon">⚡</div>
+          <div class="metric-content">
+            <div class="metric-label">Detected Tempo</div>
+            <div class="metric-value">
+              <span id="metric-bpm">120.0</span>
+              <span style="font-size: 1rem; color: #67e8f9; font-weight: 600;">BPM</span>
+              <span class="beat-led" id="beat-led" title="Real-time beat pulse indicator"></span>
+            </div>
+            <div class="metric-sub">Beats Per Minute</div>
+          </div>
+        </div>
+
+        <!-- Key Signature Card -->
+        <div class="metric-card">
+          <div class="metric-icon">🎵</div>
+          <div class="metric-content">
+            <div class="metric-label">Musical Key</div>
+            <div class="metric-value" id="metric-key" style="color: #c084fc;">C Major</div>
+            <div class="metric-sub">Harmonic Profile</div>
+          </div>
+        </div>
+
+        <!-- Duration & Meter Card -->
+        <div class="metric-card">
+          <div class="metric-icon">⏱️</div>
+          <div class="metric-content">
+            <div class="metric-label">Track Duration</div>
+            <div class="metric-value" id="metric-duration">0.0s</div>
+            <div class="metric-sub">4/4 Standard Meter</div>
+          </div>
+        </div>
+
+        <!-- Notes Detected Card -->
+        <div class="metric-card">
+          <div class="metric-icon">🎹</div>
+          <div class="metric-content">
+            <div class="metric-label">Transcribed Notes</div>
+            <div class="metric-value" id="metric-notes" style="color: #34d399;">0 Notes</div>
+            <div class="metric-sub">Polyphonic Pitch Events</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action & Export Toolbar -->
+      <div class="action-toolbar">
+        <div class="track-info-pill">
+          <span>🎧</span>
+          <span id="track-name" style="font-weight: 600; color: #fff;">Track</span>
+        </div>
+        <div class="btn-group">
+          <a id="btn-download-midi" class="btn btn-primary" download>
+            <span>📥</span> Download MIDI (.mid)
+          </a>
+          <a id="btn-download-musicxml" class="btn btn-cyan" download>
+            <span>🎼</span> Download MusicXML (.musicxml)
+          </a>
+          <button id="btn-print-sheet" class="btn btn-secondary">
+            <span>🖨️</span> Print / Save Score
+          </button>
+        </div>
+      </div>
+
+      <!-- View Tabs -->
+      <div class="view-tabs">
+        <button class="tab-btn active" id="tab-pianoroll">
+          <span>🎹</span> Playable Piano Roll
+        </button>
+        <button class="tab-btn" id="tab-sheet">
+          <span>🎼</span> Sheet Music (Grand Staff)
+        </button>
+      </div>
+
+      <!-- View 1: Playable Piano Roll -->
+      <div id="view-pianoroll" class="glass-card" style="padding: 0; overflow: hidden;">
+        
+        <!-- Transport Bar -->
+        <div class="transport-bar">
+          <div class="transport-controls">
+            <button class="transport-btn play-btn" id="btn-play" title="Play / Pause (Space)">▶</button>
+            <button class="transport-btn" id="btn-stop" title="Stop & Rewind">⏹</button>
+            <button class="transport-btn" id="btn-loop" title="Loop playback">🔁</button>
+            
+            <div class="time-display">
+              <span id="time-current">0:00.0</span> / <span id="time-total">0:00.0</span>
+            </div>
+          </div>
+
+          <!-- Audio Source Switcher -->
+          <div class="audio-source-switch">
+            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Sound:</span>
+            <button class="source-btn active" id="src-synth" title="Play notes via built-in piano synthesizer">🎹 Piano Roll Synth</button>
+            <button class="source-btn" id="src-audio" title="Play the original audio recording">🎧 Original Audio</button>
+            <button class="source-btn" id="src-both" title="Play both synth and original audio together">🔀 Layered Both</button>
+          </div>
+
+          <!-- Speed & Controls -->
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <select class="speed-select" id="speed-select" title="Playback Speed">
+              <option value="0.5">0.5x Speed</option>
+              <option value="0.75">0.75x Speed</option>
+              <option value="1.0" selected>1.0x Normal</option>
+              <option value="1.25">1.25x Speed</option>
+              <option value="1.5">1.5x Fast</option>
+            </select>
+
+            <button class="transport-btn" id="btn-zoom-out" title="Zoom Out Time Axis" style="width: 32px; height: 32px; font-size: 0.85rem;">🔍-</button>
+            <button class="transport-btn" id="btn-zoom-in" title="Zoom In Time Axis" style="width: 32px; height: 32px; font-size: 0.85rem;">🔍+</button>
+
+            <!-- Volume & Mute -->
+            <button class="transport-btn" id="btn-mute" title="Mute audio" style="width: 36px; height: 36px;">🔊</button>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.8" style="width: 70px; accent-color: var(--accent-cyan); cursor: pointer;" title="Volume">
+          </div>
+        </div>
+
+        <!-- Piano Roll Workspace -->
+        <div class="pianoroll-workspace">
+          <div class="pianoroll-viewport">
+            <!-- Piano Keys Vertical Sidebar -->
+            <div class="keyboard-sidebar" id="keyboard-container"></div>
+            
+            <!-- Canvas Container -->
+            <div class="pianoroll-canvas-container">
+              <canvas id="pianoroll-canvas"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View 2: Sheet Music Score -->
+      <div id="view-sheet" class="glass-card" style="display: none; padding: 1.5rem;">
+        <div class="sheet-toolbar">
+          <div>
+            <strong>Musical Notation:</strong> Grand Staff (Treble & Bass Clefs) with Measure Bars & Rhythm
+          </div>
+          <div style="color: #64748b; font-size: 0.8rem;">
+            OpenSheetMusicDisplay Engine (MusicXML 3.1)
+          </div>
+        </div>
+
+        <div class="sheet-music-container">
+          <div id="osmd-score-target"></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Musica AI Vibe • Intelligent Audio-to-Score & Piano Roll Transcriber • Python & Web Audio</p>
+    </footer>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/js/synth.js"></script>
+  <script src="/static/js/pianoroll.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
