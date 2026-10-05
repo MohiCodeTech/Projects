@@ -11,13 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const progressStatus = document.getElementById('progress-status');
   const progressSub = document.getElementById('progress-sub');
   const resultsSection = document.getElementById('results-section');
-  
+
   // Tabs
   const tabPianoroll = document.getElementById('tab-pianoroll');
   const tabSheet = document.getElementById('tab-sheet');
   const viewPianoroll = document.getElementById('view-pianoroll');
   const viewSheet = document.getElementById('view-sheet');
-  
+
   // Dashboard Metrics
   const metricBpm = document.getElementById('metric-bpm');
   const metricKey = document.getElementById('metric-key');
@@ -25,12 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const metricNotes = document.getElementById('metric-notes');
   const beatLed = document.getElementById('beat-led');
   const trackNameDisplay = document.getElementById('track-name');
-  
+
   // Buttons & Downloads
   const btnDownloadMidi = document.getElementById('btn-download-midi');
   const btnDownloadMusicxml = document.getElementById('btn-download-musicxml');
   const btnPrintSheet = document.getElementById('btn-print-sheet');
-  
+
   // Transport Controls
   const btnPlay = document.getElementById('btn-play');
   const btnStop = document.getElementById('btn-stop');
@@ -42,17 +42,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const zoomOutBtn = document.getElementById('btn-zoom-out');
   const volumeSlider = document.getElementById('volume-slider');
   const btnMute = document.getElementById('btn-mute');
-  
+
   // Audio Source Buttons
   const srcSynth = document.getElementById('src-synth');
   const srcAudio = document.getElementById('src-audio');
   const srcBoth = document.getElementById('src-both');
-  
+
   // Mode Selection
   let transcriptionMode = 'polyphonic';
   const modePoly = document.getElementById('mode-poly');
   const modeMelody = document.getElementById('mode-melody');
-  
+
   // Audio Playback state
   let audioData = null;
   let isPlaying = false;
@@ -64,14 +64,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let animationFrameId = null;
   let lastFrameTimestamp = null;
   let notesPlayedSet = new Set();
-  
+
   // Audio Element for original track
   const originalAudio = new Audio();
   originalAudio.preload = 'auto';
 
   // Initialize Piano Roll Engine
   const pianoRoll = new PianoRoll('pianoroll-canvas', 'keyboard-container');
-  
+
   // OSMD Sheet Music instance
   let osmd = null;
 
@@ -96,16 +96,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // ----------------------------------------------------
   if (dropzone && fileInput) {
     dropzone.addEventListener('click', () => fileInput.click());
-    
+
     dropzone.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropzone.classList.add('dragover');
     });
-    
+
     ['dragleave', 'dragend'].forEach(type => {
       dropzone.addEventListener(type, () => dropzone.classList.remove('dragover'));
     });
-    
+
     dropzone.addEventListener('drop', (e) => {
       e.preventDefault();
       dropzone.classList.remove('dragover');
@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         handleUpload(e.dataTransfer.files[0]);
       }
     });
-    
+
     fileInput.addEventListener('change', (e) => {
       if (e.target.files && e.target.files.length > 0) {
         handleUpload(e.target.files[0]);
@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function handleUpload(file) {
     stopPlayback();
     showLoading('Analyzing Audio Spectrogram...', 'Detecting tempo, beats per minute, and harmonic key profile');
-    
+
     const formData = new FormData();
     formData.append('audio', file);
     formData.append('mode', transcriptionMode);
@@ -161,24 +161,24 @@ document.addEventListener('DOMContentLoaded', () => {
       method: 'POST',
       body: formData
     })
-    .then(res => {
-      if (!res.ok) return res.json().then(d => { throw new Error(d.error || 'Upload error'); });
-      return res.json();
-    })
-    .then(data => {
-      hideLoading();
-      loadAnalysisResults(data, file.name);
-    })
-    .catch(err => {
-      hideLoading();
-      alert('Error analyzing audio: ' + err.message);
-    });
+      .then(res => {
+        if (!res.ok) return res.json().then(d => { throw new Error(d.error || 'Upload error'); });
+        return res.json();
+      })
+      .then(data => {
+        hideLoading();
+        loadAnalysisResults(data, file.name);
+      })
+      .catch(err => {
+        hideLoading();
+        alert('Error analyzing audio: ' + err.message);
+      });
   }
 
   function handleSampleAnalysis(sampleName) {
     stopPlayback();
     showLoading('Analyzing Demo Track...', 'Detecting tempo, beats per minute, and harmonic key profile');
-    
+
     setTimeout(() => {
       progressStatus.textContent = 'Transcribing Notes & Building Sheet Music...';
       progressSub.textContent = 'Constructing piano roll and grand staff score';
@@ -189,23 +189,23 @@ document.addEventListener('DOMContentLoaded', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sample: sampleName, mode: transcriptionMode })
     })
-    .then(res => {
-      if (!res.ok) return res.json().then(d => { throw new Error(d.error || 'Sample error'); });
-      return res.json();
-    })
-    .then(data => {
-      hideLoading();
-      const prettyNames = {
-        'sample_classical_fur_elise.wav': 'Für Elise Motif (Classical Piano)',
-        'sample_lofi_chords.wav': 'Lo-Fi Pop Chords (Am - F - C - G)',
-        'sample_jazz_blues.wav': 'Jazz Blues Pentatonic Hook'
-      };
-      loadAnalysisResults(data, prettyNames[sampleName] || sampleName);
-    })
-    .catch(err => {
-      hideLoading();
-      alert('Error analyzing sample: ' + err.message);
-    });
+      .then(res => {
+        if (!res.ok) return res.json().then(d => { throw new Error(d.error || 'Sample error'); });
+        return res.json();
+      })
+      .then(data => {
+        hideLoading();
+        const prettyNames = {
+          'sample_classical_fur_elise.wav': 'Für Elise Motif (Classical Piano)',
+          'sample_lofi_chords.wav': 'Lo-Fi Pop Chords (Am - F - C - G)',
+          'sample_jazz_blues.wav': 'Jazz Blues Pentatonic Hook'
+        };
+        loadAnalysisResults(data, prettyNames[sampleName] || sampleName);
+      })
+      .catch(err => {
+        hideLoading();
+        alert('Error analyzing sample: ' + err.message);
+      });
   }
 
   // ----------------------------------------------------
@@ -215,10 +215,10 @@ document.addEventListener('DOMContentLoaded', () => {
     audioData = data;
     duration = data.duration || 10.0;
     currentTime = 0.0;
-    
+
     // Display Track Info
     if (trackNameDisplay) trackNameDisplay.textContent = trackDisplayName;
-    
+
     // Update Dashboard Metrics
     if (metricBpm) metricBpm.textContent = `${data.bpm.toFixed(1)}`;
     if (metricKey) metricKey.textContent = data.key || 'C Major';
@@ -226,25 +226,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (metricNotes) metricNotes.textContent = `${data.notes_count} Notes`;
     if (timeTotal) timeTotal.textContent = formatTime(duration);
     if (timeCurrent) timeCurrent.textContent = formatTime(0);
-    
+
     // Setup Download Links
     if (btnDownloadMidi) btnDownloadMidi.href = data.midi_url;
     if (btnDownloadMusicxml) btnDownloadMusicxml.href = data.musicxml_url;
-    
+
     // Setup Original Audio element
     originalAudio.src = data.audio_url;
     originalAudio.load();
-    
+
     // Feed Data to Piano Roll
     pianoRoll.setData(data);
-    
+
     // Render Sheet Music
     renderSheetMusic(data.musicxml_content);
-    
+
     // Show Results Section
     resultsSection.style.display = 'block';
     resultsSection.scrollIntoView({ behavior: 'smooth' });
-    
+
     // Start Beat LED flash sequence
     startBeatLedSync(data.bpm, data.beat_times);
   }
@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function startBeatLedSync(bpm, beatTimes) {
     if (beatFlashInterval) clearInterval(beatFlashInterval);
     if (!beatLed) return;
-    
+
     const intervalMs = (60.0 / Math.max(20.0, bpm)) * 1000;
     beatFlashInterval = setInterval(() => {
       if (isPlaying) {
@@ -273,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const target = document.getElementById('osmd-score-target');
     if (!target) return;
     target.innerHTML = '';
-    
+
     try {
       if (window.opensheetmusicdisplay && window.opensheetmusicdisplay.OpenSheetMusicDisplay) {
         osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(target, {
@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderFallbackSheetMusic(notes, bpm) {
     const target = document.getElementById('osmd-score-target');
     if (!target || !notes) return;
-    
+
     let svg = `<svg class="svg-score-canvas" viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <rect width="1000" height="400" fill="#ffffff" />
       <text x="500" y="32" text-anchor="middle" font-family="serif" font-size="20" font-weight="bold" fill="#111827">Transcribed Piano Score</text>
       <text x="500" y="52" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#64748b">Detected Tempo: ${bpm.toFixed(1)} BPM • 4/4 Time</text>`;
-      
+
     // Draw 5 staff lines for Treble (y: 90, 105, 120, 135, 150)
     for (let i = 0; i < 5; i++) {
       const y = 90 + i * 15;
@@ -323,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
     svg += `<text x="60" y="145" font-family="serif" font-size="52" fill="#0f172a">𝄞</text>`;
     svg += `<text x="100" y="115" font-family="serif" font-size="24" font-weight="bold" fill="#0f172a">4</text>`;
     svg += `<text x="100" y="145" font-family="serif" font-size="24" font-weight="bold" fill="#0f172a">4</text>`;
-    
+
     // Draw 5 staff lines for Bass (y: 220, 235, 250, 265, 280)
     for (let i = 0; i < 5; i++) {
       const y = 220 + i * 15;
@@ -333,26 +333,26 @@ document.addEventListener('DOMContentLoaded', () => {
     svg += `<text x="60" y="265" font-family="serif" font-size="44" fill="#0f172a">𝄢</text>`;
     svg += `<text x="100" y="245" font-family="serif" font-size="24" font-weight="bold" fill="#0f172a">4</text>`;
     svg += `<text x="100" y="275" font-family="serif" font-size="24" font-weight="bold" fill="#0f172a">4</text>`;
-    
+
     // Brace and Bar lines at ends
     svg += `<line x1="50" y1="90" x2="50" y2="280" stroke="#0f172a" stroke-width="3" />`;
     svg += `<line x1="950" y1="90" x2="950" y2="280" stroke="#0f172a" stroke-width="3" />`;
-    
+
     // Measure dividers (3 bars across the line)
     [325, 535, 745].forEach(x => {
       svg += `<line x1="${x}" y1="90" x2="${x}" y2="150" stroke="#94a3b8" stroke-width="1.5" />`;
       svg += `<line x1="${x}" y1="220" x2="${x}" y2="280" stroke="#94a3b8" stroke-width="1.5" />`;
     });
-    
+
     // Render sample note heads from transcription
     const maxRender = Math.min(24, notes.length);
     const stepX = 800 / Math.max(1, maxRender);
-    
+
     for (let idx = 0; idx < maxRender; idx++) {
       const n = notes[idx];
       const nx = 140 + idx * stepX;
       const isTreble = n.pitch >= 60;
-      
+
       let ny = 120;
       if (isTreble) {
         // C4 = 165 (one ledger line below treble), B5 = 75
@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // C4 = 205 (one ledger line above bass), C3 = 250
         ny = 250 - (n.pitch - 48) * 4.5;
       }
-      
+
       // Note head
       svg += `<ellipse cx="${nx}" cy="${ny}" rx="6" ry="4.5" fill="#0f172a" transform="rotate(-20 ${nx} ${ny})" />`;
       // Stem
@@ -369,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Pitch name label underneath
       svg += `<text x="${nx}" y="${ny + 16}" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="600" fill="#475569">${n.name}</text>`;
     }
-    
+
     svg += `</svg>`;
     target.innerHTML = svg;
   }
@@ -411,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
       viewSheet.style.display = 'none';
       pianoRoll.draw();
     });
-    
+
     tabSheet.addEventListener('click', () => {
       tabSheet.classList.add('active');
       tabPianoroll.classList.remove('active');
@@ -429,19 +429,19 @@ document.addEventListener('DOMContentLoaded', () => {
   function startPlayback() {
     if (!audioData) return;
     if (window.pianoSynth) window.pianoSynth.init();
-    
+
     isPlaying = true;
     btnPlay.innerHTML = '⏸';
     btnPlay.title = 'Pause (Space)';
-    
+
     lastFrameTimestamp = performance.now();
-    
+
     if (playbackSource === 'audio' || playbackSource === 'both') {
       originalAudio.currentTime = currentTime;
       originalAudio.playbackRate = playbackSpeed;
       originalAudio.play().catch(e => console.log('Audio autoplay prevented:', e));
     }
-    
+
     requestAnimationFrame(playbackLoop);
   }
 
@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const deltaSec = (timestamp - lastFrameTimestamp) / 1000.0 * playbackSpeed;
     lastFrameTimestamp = timestamp;
-    
+
     const prevTime = currentTime;
     currentTime += deltaSec;
 
@@ -480,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
         notesPlayedSet.clear();
         if (playbackSource === 'audio' || playbackSource === 'both') {
           originalAudio.currentTime = 0.0;
-          originalAudio.play().catch(() => {});
+          originalAudio.play().catch(() => { });
         }
       } else {
         stopPlayback();
@@ -556,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
   pianoRoll.onSeekCallback = (seekTime) => {
     currentTime = seekTime;
     originalAudio.currentTime = seekTime;
-    
+
     // Reset note played cache for notes after seekTime
     notesPlayedSet.clear();
     if (audioData && audioData.notes) {
@@ -581,17 +581,17 @@ document.addEventListener('DOMContentLoaded', () => {
   function setPlaybackSource(src) {
     playbackSource = src;
     [srcSynth, srcAudio, srcBoth].forEach(btn => btn && btn.classList.remove('active'));
-    
+
     if (src === 'synth' && srcSynth) srcSynth.classList.add('active');
     if (src === 'audio' && srcAudio) srcAudio.classList.add('active');
     if (src === 'both' && srcBoth) srcBoth.classList.add('active');
-    
+
     if (isPlaying) {
       if (src === 'synth') {
         originalAudio.pause();
       } else {
         originalAudio.currentTime = currentTime;
-        originalAudio.play().catch(() => {});
+        originalAudio.play().catch(() => { });
       }
     }
   }
