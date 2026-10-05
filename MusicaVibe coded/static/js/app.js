@@ -635,4 +635,66 @@ document.addEventListener('DOMContentLoaded', () => {
     const ms = Math.floor((seconds % 1) * 10);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}.${ms}`;
   }
+
+  // ----------------------------------------------------
+  // FAQ Accordion Interactivity
+  // ----------------------------------------------------
+  const accordionItems = document.querySelectorAll('.accordion-item');
+  accordionItems.forEach(item => {
+    const header = item.querySelector('.accordion-header');
+    if (header) {
+      header.addEventListener('click', () => {
+        const isOpen = item.classList.contains('active');
+        accordionItems.forEach(other => {
+          if (other !== item) {
+            other.classList.remove('active');
+            const otherBtn = other.querySelector('.accordion-header');
+            if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+        if (isOpen) {
+          item.classList.remove('active');
+          header.setAttribute('aria-expanded', 'false');
+        } else {
+          item.classList.add('active');
+          header.setAttribute('aria-expanded', 'true');
+        }
+      });
+    }
+  });
+
+  // ----------------------------------------------------
+  // Navbar Scrollspy & Active Section Highlighting
+  // ----------------------------------------------------
+  const navButtons = document.querySelectorAll('.nav-btn');
+  const sections = document.querySelectorAll('.page-section');
+
+  function updateActiveNav() {
+    let currentSectionId = 'home';
+    const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+
+    sections.forEach(section => {
+      const sectionTop = section.offsetTop - 120;
+      const sectionHeight = section.offsetHeight;
+      if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+        currentSectionId = section.getAttribute('id');
+      }
+    });
+
+    if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 120)) {
+      currentSectionId = 'about';
+    }
+
+    navButtons.forEach(btn => {
+      if (btn.getAttribute('data-nav') === currentSectionId) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', updateActiveNav, { passive: true });
+  updateActiveNav();
 });
+
